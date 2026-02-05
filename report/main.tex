@@ -101,15 +101,21 @@ TODO: Brief Abstract
 
 \section{Introduction}
 
-When multiple processes or systems commonly use a limited amount of resource, many potential problems can occur. If the coordination is done poorly, the whole process can get stuck because of a deadlock, where the progress of the system is blocked. Besides, without a certain fairness given by the distributed system, individual components can have major waiting times compared to others, also called starvation. The Dining Philosophers problem\footnote{\url{https://en.wikipedia.org/wiki/Dining_philosophers_problem}} is a simple but realistic example addressing such situations. It helps to understand why these issues can happen and gives a good base concept for inspecting outputs of different methods in order to prevent such issues. 
+When multiple processes or systems share a limited set of resources, several problems can occur. If the coordination is done poorly, the whole system can get stuck in a deadlock, where no further progress is possible. In addition, if the system cannot ensure a certain fairness level, individual components may experience very long waiting times compared to others, also called starvation. The Dining Philosophers problem\footnote{\url{https://en.wikipedia.org/wiki/Dining_philosophers_problem}} is a simple but realistic example of such situations. It helps to understand why these issues can occur and provides a useful basis for copmaring different methods that aim to prevent them. 
 
-In the Dining Philosophers problem, philosophers are sitting around a table with one chopstick placed between two philosophers. Over time, each philosopher repeats the cycle of thinking, being hungry and eating. To eat, a philosopher needs two chopsticks (left and right chopstick) next to him/her, whereas one chopstick can only be used by one philosophers at a time.
+As shown in Figure~\ref{fig:diningphilosophers}, in the Dining Philosophers problem, philosophers sit around a table with one chopstick placed between each pair of neighboring philosophers. Over time, each philosopher repeats the cycle of thinking, being hungry and eating. To eat, a philosopher needs two chopsticks (the left and right one), while one chopstick can only be held by one philosopher at a time. Since neighboring philosophers share one chopstick, such conflicts can occur. Depending on the rule for picking up chopsticks, a situation could arise where every philosophers holds one chopstick and waits for the second one to become available. Another issue regarding the fairness could be that some philosophers may wait for much longer then others, when they want to eat.
 
-\paragraph{Reated Work.} This problem has also been addressed by \cite{zeigler2000theory}, for example, but it differs greatly from the current project. Note, that literature must be inserted into File \textit{references.bib} and can be cited via \verb|\cite{QUELLE}|.
-\paragraph{Aim.} However, goal of this project is to reduce this problem with the help of a template.
+\begin{figure}[!ht]
+ \centering
+ \includegraphics[width=0.5\textwidth]{report/images/Dining_philosophers_diagram.jpg}
+ \caption{Dining philosophers sitting at a round table, each with a bowl of spaghetti.}
+ \label{fig:diningphilosophers}
+\end{figure}
+
+Based on a discrete event simulation model, this work aims to implement the Dining Philosophers system and analyze its behavior under different configurations and rules. First, the base concept without any additional methods is inspected. Then, methods are introduced to the concept, which aim to detect and prevent deadlocks and to reduce starvation cases. Finally, we consider further scenarios such as varying the number of philosophers and allowing rule violations by individual philosophers. The different settings are compared using the simulation outcomes.  
 
 \section{Model}
-\subsection{Modelling}
+\subsection{Modeling}
 \label{sec:modelling}
 We first describe the conceptual modeling. Hereby we may apply various types of formulas such as numbered equations, like
 \begin{equation}
