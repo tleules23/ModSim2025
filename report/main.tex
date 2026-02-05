@@ -1,6 +1,6 @@
 \documentclass[a4paper,11pt]{scrartcl}
 
-\usepackage[ngerman]{babel}
+\usepackage[english]{babel}
 % uncomment or modify according to your operating system
 % \usepackage[applemac]{inputenc} % european characters can be used (Mac OS)
 %\usepackage[latin1]{inputenc} 
@@ -78,6 +78,7 @@
 \title{Discrete Event Simulation Case Study: Dining Philosophers
 Problem}
 
+%  TODO: add names
 %  TODO: add description of which parts did woh in the footnote as in the template!
 
 \publishers{Supervisor: Madlen Martinek}
@@ -99,9 +100,11 @@ TODO: Brief Abstract
 \newpage
 
 \section{Introduction}
-\paragraph{Motivation.} 
-Poorly written documentations of modelling projects are responsible for countless poor grades at Austrian universities. 
-\paragraph{Introduction to the Topic.} The main causes range from poor structure to unscientific wording and typesetting.
+
+When multiple processes or systems commonly use a limited amount of resource, many potential problems can occur. If the coordination is done poorly, the whole process can get stuck because of a deadlock, where the progress of the system is blocked. Besides, without a certain fairness given by the distributed system, individual components can have major waiting times compared to others, also called starvation. The Dining Philosophers problem\footnote{\url{https://en.wikipedia.org/wiki/Dining_philosophers_problem}} is a simple but realistic example addressing such situations. It helps to understand why these issues can happen and gives a good base concept for inspecting outputs of different methods in order to prevent such issues. 
+
+In the Dining Philosophers problem, philosophers are sitting around a table with one chopstick placed between two philosophers. Over time, each philosopher repeats the cycle of thinking, being hungry and eating. To eat, a philosopher needs two chopsticks (left and right chopstick) next to him/her, whereas one chopstick can only be used by one philosophers at a time.
+
 \paragraph{Reated Work.} This problem has also been addressed by \cite{zeigler2000theory}, for example, but it differs greatly from the current project. Note, that literature must be inserted into File \textit{references.bib} and can be cited via \verb|\cite{QUELLE}|.
 \paragraph{Aim.} However, goal of this project is to reduce this problem with the help of a template.
 
