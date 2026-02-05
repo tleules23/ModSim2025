@@ -42,6 +42,7 @@ jupyter-lab
 - Task 1: Basic Simulation (5 philosophers, 100 time units)
 - Task 2: Deadlock Detection
 - Task 3: Deadlock Prevention (priority ordering + timeout strategies)
+- Task 4: Starvation Avoidance (FIFO Queue of hungry philosophers)
 
 ## Deactivate Environment
 
