@@ -31,6 +31,3 @@ __pycache__/
 dist/
 build/
 *.egg-info/
-
-# Markdown files
-*.md
