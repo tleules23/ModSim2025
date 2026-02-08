@@ -119,27 +119,74 @@ Based on a discrete event simulation model, this work aims to implement the Dini
 
 TODO: do not forget to update requirements.txt after finishing implementation!
 
-Describe Modeling Approach
+\subsection{Modeling Approach}
+
+describe in general how we modelled (which classes / entitites etc.)
+
++ f.e. explain 1 time unit = 1 min etc.
+
+\subsection{Base Model}
 
 1. Describe basic model (f.e. includig initial setup of model) 
 
+\subsection{Deadlock Detection / Prevention}
+
 2. explain Deadlock -> describe our Deadlock Detection / Prevention Concepts
+
+\subsection{Starvation Avoidance}
 
 3. explain Starvation -> describe our Starvation Avoidance Concept
 
+Deadlocks are not the only issues that can occur during the simulation runs. Because of the mostly stochastic nature of the dining philosopher problem, given by the unordered sequence of chopstick acquisitions by the philosophers, it is possible that each participant in the simulation run is waiting indefinitely for his turn to eat. A fitting example would be the case where both neighbors of the same philosopher always take the chopsticks first. Long enough waiting times can lead to starvation, which for the dining philosophers problem is considered to have failed if even one philosopher starves. In our model, starvation does not directly imply death or termination; it refers to unfair scheduling where a philosopher may wait indefinitely while others continue to eat. In the current baseline implementation biased anyone can attempt to grab free chopsticks and fast or lucky philosophers may finish thinking earlier, retry more aggressively or reaquire chopsticks repeatedly.
+
+This possibility of indefinite waiting times requires the addition of a mechanism that ensures fairness between the members for acquiring the chopsticks.
+
+\subsubsection{Fairness Mechanism}
+
+In order to combat starvation, the model is using an aging-based scheduling strategy in which hungry philosophers are dynamically prioritized by the time elapsed since their last eating event. 
+
+\subsection{Scenario Variations}
+
 4. explain complex scenarios we are further inspecting
 
-5. briefly describe that we always apply monte carlo, and what kind of statistics we are looking at
+\subsection{Evaluation Methodology}
 
-6. explain we are also using logging for deug and so on and just show a brief snippet
+In order to draw reliable conclusions, we do not rely on a single simulation run. For this reason, all simulations are done using a Monte Carlo Simulation. Depending on the scenario and parameter setting, each configuration is repeated between 50 and 100 times.
 
-\section{Starvation Avoidance}
+The evaluation is primarily based on summary statistics across runs, including the mean and standard deviation of measured performance and fairness metrics. For instance, the total number of eating events, the average number of eats per philosopher, as well as dispersion measures such as the minimum and maximum number of eats across philosophers are reported. Listing~\ref{lst:reportoutput} shows an example report generated from a Monte Carlo simulation. The focus of this Listing is on the structure of the reported metrics rather than on the specific numerical values.
 
-Deadlocks are not the only issues that can occur during the simulation runs. Because of the mostly stochastic nature of the dining philosopher problem, given by the unordered sequence of chopstick aquisitions by the philsophers, it is possible that each participant in the simulation run indefinitely waits for his turn to eat. A fitting example would be the case where both neighbours of the same philosopher always take the chipstocks first. Long enough waiting times can lead to starvation which for the dining philosophers problem is considered to have failed if even one philosopher starves.
-This possibility of starvation requires the addition of an mechanism which ensures fairness between the members for aquiring the chopsticks.
+\begin{lstlisting}[language={},keywordstyle=\color{black},commentstyle=\color{black},stringstyle=\color{black},caption={Example Report Output},
+ label=lst:reportoutput]  
+Runs: 100
+Avg total eats: 47.96 +/- 6.62
+Avg eats/philosopher: 9.59 +/- 1.32
+Avg min/max eats: 7.51 / 11.79
+Avg Gini (fairness): 0.088
+Deadlock runs: 17/100
+Avg first deadlock time: 76.99
+Per-philosopher avg eats: [9.34, 9.54, 9.61, 9.75, 9.72]
+Per-philosopher std eats: [2.11, 2.35, 2.04, 2.14, 1.91]
+Per-philosopher avg thinking time: [49.74, 48.37, 48.97, 50.78, 49.28]
+Per-philosopher avg hungry time:   [43.5, 43.47, 41.51, 41.06, 43.68]
+Per-philosopher avg eating time:   [26.76, 28.16, 29.53, 28.16, 27.04]
+Per-philosopher std thinking time: [12.37, 11.51, 12.69, 11.14, 12.09]
+Per-philosopher std hungry time:   [11.61, 12.65, 12.81, 12.0, 11.4]
+Per-philosopher std eating time:   [7.54, 8.03, 8.26, 8.34, 7.52]
+Zero-eat rate by philosopher: [0.0, 0.0, 0.0, 0.0, 0.0]
+\end{lstlisting}    
 
+To monitor simulation progress and to enable debugging before running large Monte Carlo batches, we use logging during individual runs. Listing~\ref{lst:logging} illustrates a short example from the event log of an individual simulation run. 
 
-\subsection{Parametrisation}
+\begin{lstlisting}[language={},keywordstyle=\color{black},commentstyle=\color{black},stringstyle=\color{black},caption={Snippet of an Example Simulation Logging},
+ label=lst:logging]  
+[t=0.27] Philosopher 0 is now HUNGRY
+[t=0.38] Philosopher 0 is now EATING (count: 1)
+[t=0.46] Philosopher 1 is now HUNGRY
+[t=0.57] Philosopher 3 is now HUNGRY
+[t=1.01] Philosopher 3 is now EATING (count: 1)
+\end{lstlisting}  
+
+\subsection{Parametrisation (from template)}
 It is important to distinguish between parameters and parameter values. The latter should be specified e.g. using a parameter table such as 
 Table \ref{tab:ParA}. Do not forget to explain where you got your parameter values from.
 \begin{table}[!h]
