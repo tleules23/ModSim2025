@@ -93,7 +93,7 @@ Hasan Hüseyin Günes, 12229237 - Curriculum Number: UE 066 645\footnote{TODO: A
 \maketitle
 % TODO
 \begin{abstract}
-TODO: Brief Abstract
+
 \end{abstract}
 
 \newpage
@@ -119,8 +119,6 @@ As shown in Figure~\ref{fig:diningphilosophers}, in the Dining Philosophers prob
 Based on a discrete event simulation (DES) model, this work aims to implement the Dining Philosophers system and analyze its behavior under different configurations and rules. First, the base concept without any additional methods is inspected. Then, methods are introduced to the concept, which aim to detect and prevent deadlocks and to reduce starvation cases. Finally, we consider further scenarios such as varying the number of philosophers and allowing rule violations by individual philosophers. The different settings are compared using the simulation outcomes.  
 
 \section{Model}
-
-TODO: do not forget to update requirements.txt after finishing implementation!
 
 As already mentioned, a DES approach is used to realize this problem. The model is implemented in Python, and the source code is publicly available in a GitHub Repository\footnote{\url{https://github.com/tleules23/ModSim2025}}.
 
@@ -152,17 +150,17 @@ When a deadlock is identified, the simulation increments \texttt{deadlock\_count
 
 We compare three different approaches for chopstick acquisition and deadlock handling:
 
-\paragraph{Left-first (baseline rule).}
+\paragraph{Left-first (baseline rule):}
 In the baseline model, each philosopher attempts to acquire chopsticks in a fixed order: left first, then right. This behaviour is implemented in\\ \texttt{get\_chopstick\_order()}, which returns the tuple \texttt{(left, right)} when no priority strategy is active. Chopstick acquisition is handled in two steps by \texttt{try\_acquire\_chopsticks()}. The philosopher first tries to take the initial chopstick if it is available and, if the second chopstick cannot be obtained immediately, retries after a short delay.
 
 Because all philosophers follow the same symmetric rule, randomised start times often result in reasonably balanced eating counts. However, this approach does not eliminate circular waiting. In the case of synchronised starts, all philosophers may pick up their left chopstick at the same time and then block each other indefinitely while waiting for the right one. As a result, the left-first strategy can appear fair, but it does not guarantee progress.
 
-\paragraph{Priority ordering (lowest-ID first).}
+\paragraph{Priority ordering (lowest-ID first):}
 In this strategy, each philosopher always attempts to pick up the lower-ID chopstick first. This behaviour is implemented in \texttt{get\_chopstick\_order()}, which returns the tuple \texttt{($\min(left, right), \max(left, right))$} when \texttt{prevention\_strategy == "priority"}. By enforcing a single global ordering of resources, the circular-wait condition is eliminated, and deadlock is prevented by design.
 
 The main drawback of this approach is reduced fairness. Chopstick~0 becomes a shared bottleneck, and philosophers that depend on it (in particular IDs~0 and~4) may experience longer waiting times. In the results, this effect can appear as biased eating counts across philosophers. The trade-off is therefore clear: guaranteed deadlock prevention comes at the cost of potential unfairness.
 
-\paragraph{Timeout strategy.}
+\paragraph{Timeout strategy:}
 In the timeout approach, a philosopher who holds one chopstick waits only a fixed amount of time to acquire the second one. In the implementation, when the second chopstick is unavailable and \texttt{prevention\_strategy == "timeout"}, the simulator schedules a \texttt{TIMEOUT\_RELEASE} event after \texttt{timeout\_duration}. If the philosopher is still in the \texttt{HUNGRY} state at that time, \texttt{handle\_timeout\_release()} releases any held chopstick and schedules a retry.
 
 This mechanism breaks circular waiting without enforcing a global resource ordering. While it does not provide a strict mathematical guarantee of deadlock freedom, deadlocks are resolved in practice once timeouts are triggered. Compared to the priority strategy, it also reduces systematic bias, since philosophers are not locked into a fixed acquisition order. The main cost of this approach is additional retries and waiting, which can slightly reduce overall throughput.
@@ -308,6 +306,7 @@ In the single baseline run, only 4 eating events occurred in 120 time units and 
 In the detection run with \texttt{halt\_on\_deadlock=True}, the simulation stops at the first deadlock (at t=19.26). This shows that the detection logic works and that a deadlock can occur even without prevention.
 
 Monte Carlo results with randomized starts show deadlocks in 11 of 100 runs. This is expected because deadlock is not guaranteed under random timing; it depends on whether all philosophers reach the circular‑wait condition within the simulation horizon. The average performance metrics are similar to the baseline because detection only stops runs that actually reach deadlock.
+
 \begin{table}[H]
   \centering
   \begin{tabular}{l c}
@@ -327,7 +326,87 @@ Monte Carlo results with randomized starts show deadlocks in 11 of 100 runs. Thi
   \caption{Deadlock detection strategy: Monte Carlo summary.}
   \label{tab:detection_mc}
 \end{table}
-  
+
+The single-run results already show the main differences between the strategies. 
+The left-first approach is prone to deadlock. In the randomized run, several deadlocks 
+occurred during the simulation. With synchronized start, the system deadlocks immediately 
+at time 0, which is expected because all philosophers try to pick up the same chopstick 
+at the same time. This confirms that the baseline strategy is unsafe under unfavorable 
+conditions.
+
+The lowest-ID-first (priority) strategy avoids deadlocks in both randomized and 
+synchronized starts. All philosophers are able to eat, but the eat counts are not fully 
+balanced. Some philosophers eat more often than others, which indicates a small fairness 
+bias caused by the fixed priority rule. However, no starvation occurs and the system always 
+makes progress.
+
+The timeout strategy also avoids deadlock in the single run and results in relatively 
+balanced eat counts. Compared to the priority strategy, the total number of eats is 
+slightly higher. Timeouts allow philosophers to release chopsticks when they wait too 
+long, which helps the system recover from blocking situations.
+
+The Monte Carlo results over 100 runs confirm these observations. The left-first strategy 
+has the lowest average throughput and still produces deadlocks in 11\% of the runs. Even 
+though the fairness measure is relatively good when the system runs, deadlocks make this 
+strategy unreliable. The priority strategy prevents deadlocks in all runs, but shows a 
+small fairness imbalance due to priority ordering. The timeout strategy achieves the 
+highest average throughput and good fairness. A small number of deadlocks (5\%) still 
+occur, but they are short and do not stop the simulation permanently.
+
+Table~\ref{tab:task3_mc_summary} summarizes the Monte Carlo results and highlights the 
+trade-off between deadlock safety, throughput, and fairness for the different strategies.
+
+\begin{table}[H]
+\centering
+\caption{Monte Carlo results (100 runs) for Task 3 strategies}
+\label{tab:task3_mc_summary}
+\begin{tabular}{lcccc}
+\hline
+Strategy & Avg Total Eats & Avg Eats / Philosopher & Gini & Deadlock Runs \\
+\hline
+Left-First (Random) & $47.35 \pm 6.37$ & $9.47 \pm 1.27$ & 0.087 & 11 / 100 \\
+Left-First (Sync) & 0.00 & 0.00 & 0.000 & 100 / 100 \\
+Priority (Random) & $51.23 \pm 6.52$ & $10.25 \pm 1.30$ & 0.096 & 0 / 100 \\
+Priority (Sync) & $51.39 \pm 6.33$ & $10.28 \pm 1.27$ & 0.104 & 0 / 100 \\
+Timeout & $53.33 \pm 5.70$ & $10.67 \pm 1.14$ & 0.093 & 5 / 100 \\
+\hline
+\end{tabular}
+\end{table}
+
+In addition to throughput and deadlock behavior, fairness was evaluated using the Gini 
+coefficient, where lower values indicate a more even distribution of eat counts among 
+philosophers. All strategies except left-first with synchronized start show relatively 
+low Gini values, indicating good fairness overall. The priority strategy exhibits slightly higher Gini values compared to the other approaches, which reflects the bias introduced by fixed priority ordering. The timeout strategy achieves good fairness while maintaining high throughput, making it a balanced solution in practice.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{report/images/Task 3/task3_fairness_gini.png}
+\caption{Fairness comparison using the Gini coefficient (lower values indicate more fairness)}
+\label{fig:task3_fairness}
+\end{figure}
+
+Figure~\ref{fig:task3_deadlocks} shows the deadlock frequency across strategies, clearly 
+illustrating the difference between deadlock-prone and deadlock-preventing approaches.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{report/images/Task 3/task3_deadlock_frequency.png}
+\caption{Deadlock frequency over 100 Monte Carlo runs for different strategies}
+\label{fig:task3_deadlocks}
+\end{figure}
+
+Figure~\ref{fig:task3_throughput} compares the total system throughput. Strategies that 
+avoid deadlock also achieve higher overall performance.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\linewidth]{report/images/Task 3/task3_throughput.png}
+\caption{Average total system throughput for different strategies}
+\label{fig:task3_throughput}
+\end{figure}
+
+Overall, the priority strategy is the safest choice if deadlock freedom is required, while the timeout strategy provides the best practical performance by balancing throughput and fairness. The left-first strategy is simple and fair in theory, but unsafe in practice due to its deadlock behavior.
+
 \subsection{Starvation Avoidance}
 
 In the following, the impact of the starvation avoidance mechanism is investigated on the simulation runs using Monte Carlo simulation. A model using priority ordering is used as the baseline for comparing the system with and without starvation avoidance. Both of the model configurations are executed over 50 independent runs with identical parameters and the performance metrics are collected for every philosopher in each turn.
@@ -352,7 +431,7 @@ The boxplot illustrated in Figure \ref{fig:eat-counts} shows the eat-count distr
 \end{figure}
 
 \noindent
-Running the model with no starvation avoidance delivers a median hungry time of about 35 minutes, while the system with starvation avoidance enabled has a median of about 80 minutes with a large but structured spread (see Figure \ref{fig:hungry_times}). This reflects longer waiting periods introduced by prioritizing the most starved philosopher and temporarily blocking others from progressing. One particular philosopher is allowed to eat while the others have to wait. Even though they have to wait longer to eat, the other philosophers dont have to wait a indefinite amount of time to get the chopsticks. This reflects bounded waiting instead of starvation.
+Running the model with no starvation avoidance delivers a median hungry time of about 35 minutes, while the system with starvation avoidance enabled has a median of about 80 minutes with a large but structured spread (see Figure \ref{fig:hungry_times}). This reflects longer waiting periods introduced by prioritizing the most starved philosopher and temporarily blocking others from progressing. One particular philosopher is allowed to eat while the others have to wait. Even though they have to wait longer to eat, the other philosophers don't have to wait a indefinite amount of time to get the chopsticks. This reflects bounded waiting instead of starvation.
 
 
 \begin{figure}[H]
@@ -414,8 +493,6 @@ Now, we want to vary the thinking time. For this reason, we want to look at two 
     \label{fig:var_think}
 \end{figure}
 
-%% analysis of reuslts %%
-
 Since we want to get cases, where the deadlock possibility is high enough, we will set the distribution for the thinking times to $unif(0.3,3)$ for the remaining part of this section.
 
 \subsubsection{Varying Eating Time}
@@ -429,27 +506,93 @@ As already mentioned, we will vary between two different configurations of a tru
 
 With these configurations, we aim to see how the duration of the eating time with thinking times sampled from $unif(0.3,3)$ will impact the results. 
 
-%% results for this part %%
+Figure~\ref{fig:var_eat} contains a grouped bar chart that compares how two different eating-time distributions affect performance for five philosopher under the three strategies. Across all strategies, increasing the eating time from $norm(8,3)$ to $norm(15,3)$ hugely reduces the average eat numbers. That makes sense, since we can see philosophers simply spend longer holding chopsticks, so fewer eating cycles fit into the fixed simulation horizon. Although PO achieves the highest throughput, it is consistently the least fair strategy. LF stays the most problematic in terms of stability, with high deadlock rates, even though its Gini value is low. All in all, we see that with the higher eating times, the number of eats drops massively, which makes sense.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{report/images/Task 5/var_eat.png}
+    \caption{Effect of Eating Time Distribution}
+    \label{fig:var_eat}
+\end{figure}
 
 \subsubsection{Selfish Philosophers}
 
-Now, we will continue with the following default settings: Five philosophers, simulation run time set to 800, 100 excecuted MC runs, thinking time sampled from $unif(0.3,3$ and eating time sampled form $norm(8,3)$ (truncated: [1,16]).
+Now, we will continue with the following default settings: Five philosophers, simulation run time set to 800, 100 executed MC runs, thinking time sampled from $unif(0.3,3)$ and eating time sampled from $norm(8,3)$ (truncated: [1,16]).
+
+First, we will use the model with the TO strategy and introduce a selfish philosopher, who will have the following characteristics:
+
+\begin{itemize}
+    \item Ignoring the Timeout strategy
+    % \item Ignoring the Priority Ordering Strategy and just deciding randomly on which chopstick to take first
+    \item No immediately dropping of chopsticks after finishing eating (extra holding time before release = 1 second)
+\end{itemize}
+
+Figure~\ref{fig:self_to} compares the per-philosopher eating counts under the timeout strategy (timeout duration = 8) for a normal baseline run versus a run with one selfish philosopher (ID = 3). For the baseline case, we see that all people achieve nearly the same number of eats, so the outcome is fairly balanced. However, when philosopher 3 behaves selfishly, the distribution becomes strongly skewed: philosopher 3 increases its average eats substantially, while at least one other philosopher (ID = 2) drops notably. This makes sense, since the selfish philosopher has to impact at least one of his neighbors. We can also see that in the shift of the Gini index, it goes higher. Overall, the selfish behavior benefits the selfish philosopher directly, but it reduces fairness, which was somehow expected.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{report/images/Task 5/selfish_timeout.png}
+    \caption{Effect of 1 Selfish Philosopher for Timeout strategy}
+    \label{fig:self_to}
+\end{figure}
+
+Now, we will look at one selfish philosopher again, but with the PO strategy. Here, the selfish philosopher has the following characteristics:
+
+\begin{itemize}
+    % \item Ignoring the Timeout strategy
+    \item Ignoring the Priority Ordering Strategy and just deciding randomly on which chopstick to take first
+    \item No immediately dropping of chopsticks after finishing eating (extra holding time before release = 1 second)
+\end{itemize}
+
+Figure~\ref{fig:self_po} now shows the same statistics, but for the PO strategy. Besides, the selfish philosopher is philosopher with ID 1 in this case. We decides on that, because with the PO strategy, we already have an unfairness, benefiting the philosopher 3. After introducing the selfish philosopher, philosopher 1 increases its average eats substantially, while other philosophers, especially philosopher 2, lose some eats. We also see that the Gini also got higher. However, deadlocks remain at $0$, which again shows that although PO is more unfair, it is very stable.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{report/images/Task 5/selfish_priority.png}
+    \caption{Effect of 1 Selfish Philosopher for Priority Ordering strategy}
+    \label{fig:self_po}
+\end{figure}
 
 \subsubsection{Conspirator Philosophers}
 
+Now we introduce conspirator philosophers. Their characteristics are already described in Section~\ref{scenario_variations}.
+
+Figure \ref{fig:consp} compares the baseline (PO strategy) model with a conspiracy scenario where philosophers 1 and 3 collude to block philosopher 2. In the baseline, priority ordering is again already somewhat unequal (Gini is high), but all philosophers still eat regularly. Under conspiracy, the effect becomes extreme. So, the victim philosopher 2 drops from roughly $37$ eats to about $12.5$, indicating clear starvation. At the same time, one conspirator, especially philosopher 3, benefits heavily, increasing to around $62$ eats, while the other philosophers also gain slightly. We also see, this distribution slightly increased the Gini index, which again makes sense. However, we again see that deadlocks remain at $0\%$, which again speaks for the robustness of this strategy.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{report/images/Task 5/selfish_conspirator.png}
+    \caption{Effect of introducing Conspirators}
+    \label{fig:consp}
+\end{figure}
+
+In summary, the additional scenarios show that the system’s results depend heavily on how much contention there is and whether all philosophers follow the intended rules. When the number of philosophers increases, the differences between the strategies become clearer: LF is still prone to deadlocks and shows high variability, while PO and the TO approach are much more stable and usually achieve higher throughput. Changing the timing distributions mainly affects where the simulation time is spent. Short thinking times lead to more simultaneous requests for chopsticks, so hungry time increases and deadlocks can become slightly more likely, whereas longer eating times reduce the overall number of eating events because chopsticks are occupied for longer periods. Finally, the selfish and conspiracy experiments highlight that preventing deadlocks is not enough on its own: even with a deadlock-free strategy like priority ordering, unfair behavior can create strong imbalances and clear starvation effects, which is reflected by the much higher Gini values and the per-philosopher results.
+
 \section{Discussion}
-\paragraph{Summary.} We tell what we told, and summarise that we showed some important \LaTeX commands for scientific writing and displayed some dummy simulation results.
-\paragraph{Result Interpretation}
-We interpret the results and put them in contrast with each other and the real system. 
-\paragraph{Conclusion.} We conclude that writing a proper project documentation is not so hard and hope you have fun doing it yourself. 
-\paragraph{Outlook.} However, we understand that further research might be necessary.
+
+This work investigated the Dining Philosophers problem using a discrete event simulation framework, with the focus set on deadlock occurrence, starvation, and fairness under different prevention strategies. By incrementally extending a simple baseline model with deadlock detection, prevention mechanisms, and starvation avoidance, we were able to systematically analyze the trade-offs between system efficiency, robustness, and fairness.
+
+\subsection*{Summary of Findings}
+
+Our initial model with the left-first strategy showed that while the system can operate smoothly under favorable timing conditions, it still can be suspect to deadlocks and unfair resource allocations. We introduced Monte Carlo experiments , which showed that deadlocks can occur on regular basis and that individual philosophers may experience very low or zero eating counts in some runs.
+
+When we introduced deadlock detection into our model, it confirmed that such blocking states can arise naturally as an effect of even resource acquisition rules. Among the prevention strategies, priority-based was able to successfully eliminate deadlocks by setting a global resource order for the philosophers, while the timeout strategy resolved circular waiting dynamically without relying on strict ordering. Across multiple scenarios, the timeout strategy was able to achieve high throughput consistently while maintaining low deadlock rates.
+
+Additionally the model included starvation avoidance to abolish indefinite waiting times using priority mechanism that effectively bounded waiting times and provided fairness by even eating distributions amonst the philosophers. However, this improvement in fairness came at the cost of reduced parallelism and lower overall model throughput, as only one philosopher was allowed to acquire resources at a time.
+
+Scenario variations further showed how the system behavior depends on its parameter settings. Increasing the number of philosophers showed strong deviations between strategies, while shorter thinking times increased conflict and deadlock likelihood. The experiments with selfish and conspirator philosophers highlighted how uncooperative behavior can affect fairness and system stability negatively.
+
+\subsection*{Interpretation and Trade-offs}
+
+The results show that no single rule is best in all aspects. Symmetric rules like left‑first can look fair and keep good throughput, but they can still deadlock. Priority ordering (lowest‑ID first) removes deadlock by design, yet it introduces a bias because some chopsticks are targeted more often. The timeout strategy sits in between: it avoids long deadlocks in practice and keeps fairness closer to the baseline, but it adds retries and small overhead.
+
+The starvation avoidance mechanism highlights another common trade‑off. By giving priority to the longest‑waiting philosopher, fairness improves, but total throughput usually drops because fewer philosophers can compete at the same time. This reflects a typical balance between efficiency and fairness in resource‑sharing systems.
+
+Overall, the Dining Philosophers model is alternative way to study coordination problems that appear in real systems such as locking in databases, scheduling in operating systems, and resource allocation in distributed services.
+
 \newpage
 
 \bibliographystyle{plain}
 \bibliography{references}
 
-\appendix
-\section{Appendix}
-\subsection{Not Quite Relevant Enough}
-Some stuff which is not quite important enough for the main text.
 \end{document}
