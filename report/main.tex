@@ -126,10 +126,6 @@ As already mentioned, a DES approach is used to realize this problem. The model 
 
 \subsection{General Modeling Approach}
 
-describe in general how we modeled (which classes / entitites etc.)
-
-+ f.e. explain 1 time unit = 1 min etc.\\
-
 The DES contains three core components: entities, events and event schedule. The entities are philosophers and chopsticks. Philosophers can be in the states \verb|THINKING|, \verb|HUNGRY| or \verb|EATING|, whereas the chopsticks form the shared resources that can be acquired and released. Events are used to illustrate changes and resource interactions, such as a philosopher finish thinking and becoming hungry or attempting to acquire chopsticks. The event schedule is implemented as a time-ordered priority queue and defines the timeline of the events. The simulation time progress is given by repeatedly processing the next event in time-oriented order.
 
 The initial setup looks as follows: five philosophers, each starting in the \verb|THINKING| state, are seating around a round table, with one chopstick placed between neighboring philosophers (= five chopsticks). Random delays are introduced every time a philosophers starts thinking or eating, to model asynchronous, more realistic behavior, specifically for thinking durations, acquisition retries when chopsticks are unavailable, and eating durations. These delays are mainly sampled from exponential distributions, while in the case, where additional scenarios are inspected, these distributions are varied (see Section~\ref{scenario_variations}).
@@ -142,12 +138,34 @@ For the thinking times, we chose an exponential distribution with mean 5 and the
 
 \subsection{Base Model}
 
-1. Describe basic model, what happens if deadlock etc., like just describing the setting you chose in task 1
+The base model captures the default simulation behaviour and \textbf{is not} a deadlock-prevention strategy. Each philosopher starts in the \texttt{THINKING} state. After a random thinking duration, the philosopher becomes \texttt{HUNGRY} and attempts to acquire two chopsticks sequentially: first one chopstick (left by default), then the second one. If the second chopstick is unavailable, the philosopher keeps the first chopstick and retries after a short random delay. Once both chopsticks are acquired, the philosopher enters the \texttt{EATING} state for a random duration, releases both chopsticks, and returns to \texttt{THINKING}.
+
+Since no coordination rule is enforced, the system may either progress smoothly or enter a deadlock, depending on the timing of events. In practice, this outcome is sensitive to the random seed: some runs are effectively “lucky”, while others reach the deadlocked configuration. We use this baseline as a reference point for comparing explicit prevention strategies (e.g., a priority rule such as lowest-ID first), highlighting the trade-off between simplicity and guaranteed progress.
 
 \subsection{Deadlock Detection / Prevention}
 
-2. explain Deadlock -> describe our Deadlock Detection / Prevention Concepts
+The goal of this part is to detect and mitigate deadlocks while still allowing philosophers to eat. In our model, a deadlock occurs when all philosophers are in the \texttt{HUNGRY} state and each of them holds exactly one chopstick. In this configuration, no philosopher can acquire the second chopstick, and the system stops making progress.
 
+Deadlock detection is executed inside \texttt{process\_event} after each event is handled, so the check is performed at every state change in the system. The function \texttt{check\_deadlock()} implements the structural definition of deadlock by counting how many philosophers are in the \texttt{HUNGRY} state and how many of them hold exactly one chopstick. A deadlock is detected when both values equal the total number of philosophers.
+
+When a deadlock is identified, the simulation increments \texttt{deadlock\_count}, stores the current simulation time in \texttt{deadlock\_times}, and writes a corresponding entry to the event log. \texttt{halt\_on\_deadlock=True} stops the simulation immediately after the first detection in order to illustrate the deadlock situation clearly. In other configurations, the simulation continues running so that different prevention strategies can be compared under the same detection logic.
+
+We compare three different approaches for chopstick acquisition and deadlock handling:
+
+\paragraph{Left-first (baseline rule).}
+In the baseline model, each philosopher attempts to acquire chopsticks in a fixed order: left first, then right. This behaviour is implemented in\\ \texttt{get\_chopstick\_order()}, which returns the tuple \texttt{(left, right)} when no priority strategy is active. Chopstick acquisition is handled in two steps by \texttt{try\_acquire\_chopsticks()}. The philosopher first tries to take the initial chopstick if it is available and, if the second chopstick cannot be obtained immediately, retries after a short delay.
+
+Because all philosophers follow the same symmetric rule, randomised start times often result in reasonably balanced eating counts. However, this approach does not eliminate circular waiting. In the case of synchronised starts, all philosophers may pick up their left chopstick at the same time and then block each other indefinitely while waiting for the right one. As a result, the left-first strategy can appear fair, but it does not guarantee progress.
+
+\paragraph{Priority ordering (lowest-ID first).}
+In this strategy, each philosopher always attempts to pick up the lower-ID chopstick first. This behaviour is implemented in \texttt{get\_chopstick\_order()}, which returns the tuple \texttt{($\min(left, right), \max(left, right))$} when \texttt{prevention\_strategy == "priority"}. By enforcing a single global ordering of resources, the circular-wait condition is eliminated, and deadlock is prevented by design.
+
+The main drawback of this approach is reduced fairness. Chopstick~0 becomes a shared bottleneck, and philosophers that depend on it (in particular IDs~0 and~4) may experience longer waiting times. In the results, this effect can appear as biased eating counts across philosophers. The trade-off is therefore clear: guaranteed deadlock prevention comes at the cost of potential unfairness.
+
+\paragraph{Timeout strategy.}
+In the timeout approach, a philosopher who holds one chopstick waits only a fixed amount of time to acquire the second one. In the implementation, when the second chopstick is unavailable and \texttt{prevention\_strategy == "timeout"}, the simulator schedules a \texttt{TIMEOUT\_RELEASE} event after \texttt{timeout\_duration}. If the philosopher is still in the \texttt{HUNGRY} state at that time, \texttt{handle\_timeout\_release()} releases any held chopstick and schedules a retry.
+
+This mechanism breaks circular waiting without enforcing a global resource ordering. While it does not provide a strict mathematical guarantee of deadlock freedom, deadlocks are resolved in practice once timeouts are triggered. Compared to the priority strategy, it also reduces systematic bias, since philosophers are not locked into a fixed acquisition order. The main cost of this approach is additional retries and waiting, which can slightly reduce overall throughput.
 \subsection{Starvation Avoidance}
 
 Deadlocks are not the only issues that can occur during the simulation runs. Because of the mostly stochastic nature of the dining philosopher problem, given by the unordered sequence of chopstick acquisitions by the philosophers, it is possible that each participant in the simulation run is waiting indefinitely for his turn to eat. A fitting example would be the case where both neighbors of the same philosopher always take the chopsticks first. Long enough waiting times can lead to starvation, which for the dining philosophers problem is considered as a failed run if even one philosopher starves. In our model, starvation does not directly imply death or termination; it refers to unfair scheduling where a philosopher may wait indefinitely while others continue to eat. In the current baseline implementation biased anyone can attempt to grab free chopsticks and fast or lucky philosophers may finish thinking earlier, retry more aggressively or acquire chopsticks repeatedly. 
@@ -259,61 +277,6 @@ To monitor simulation progress and to enable debugging before running large Mont
 [t=1.01] Philosopher 3 is now EATING (count: 1)
 \end{lstlisting}  
 
-
-\subsection{Implementation}
-
-maybe talk about how we implemented it in general + some details maybe
-
-
-Implementation should be distinguished from the conceptual modelling (see Section \ref{sec:modelling}) and described in a separate section. Keep it brief \textbf{do not} put the whole source-code into the documentation. If there are important snippets, you may use e.g. \verb|\lstinputlisting|.
-
- \lstinputlisting[
- language=Matlab,
- caption={Function polar2cartesian.},
- label={SRC:polar2cartesian}]{./code/BeispielCode.m}
-
-Listing \ref{SRC:polar2cartesian} shows the source-code of \verb|polar2cartesian| in MATLAB. 
- 
-Source code without file can be included via:
-\begin{lstlisting}[
- basicstyle=\footnotesize, % the size of the fonts that are used for the code
- frame=single,          
- language=c++,
- numbers=left,             % where to put the line-numbers
- escapeinside={//*}{*//},  % for line labeling
- caption={Definition der Klasse \texttt{InOutputVector}.},
- label=src:InOutputVector_defs]  
- class InOutputVector:public std::vector<InOutput> {
-   public:
-     int untreated_entry_changes;
-     
-     InOutputVector() {            //* \label{lnbr:InOutput_constructor} *//
-       untreated_entry_changes = 0;
-     }    
-     void setAt(int c,double val,double t) {
-       if(true==(*this)[c].already_treated) {
-         untreated_entry_changes++;
-       } 
-       (*this)[c].set(val,t);
-     }
-     double* treatAt(int c,double val) {
-       if(false==(*this)[c].already_treated) {
-         untreated_entry_changes--;
-       }
-       return((*this)[c].treat());
-     }
-     void treatAll() {
-       for(int i=0; i<this->size(); i++){
-         (*this)[i].already_treated = true;
-       }
-       untreated_entry_changes=0;
-     }
- };
-\end{lstlisting}    
-
-In row \ref{lnbr:InOutput_constructor} in Listing \ref{src:InOutputVector_defs} we find the constructor of class
-\verb|InOutputVector|.
-
 \section{Simulation Results}
 
 Talking about results (in a storytelling way, so beginning with basic model, then extending with deadlock detection and so on, as in the notebook) + of course showing some plots
@@ -321,9 +284,50 @@ Talking about results (in a storytelling way, so beginning with basic model, the
 We document the results of the simulation as far as possible without potentially subjective interpretation. This is usually done with the help of plots.
 
 \subsection{Base Model}
+In the single baseline run, only 4 eating events occurred in 120 time units and several philosophers ate zero times. This shows that single runs can be highly sensitive to randomness and are not reliable on their own. For that reason, we focus on Monte Carlo results. (Note: 0 deadlocks because they are not detected yet)
+\begin{table}[H]
+  \centering
+  \begin{tabular}{l c}
+    \hline
+    \textbf{Metric} & \textbf{Value} \\
+    \hline
+    Number of runs & 100 \\
+    Average total eats & 45.12 $\pm$ 9.68 \\
+    Average eats per philosopher & 9.02 $\pm$ 1.94 \\
+    Average min / max eats & 7.01 / 11.16 \\
+    Average Gini (fairness) & 0.092 \\
+    Deadlock runs & 0 / 100 \\
+    Zero-eat rate & 0.0 \\
+    \hline
+  \end{tabular}
+  \caption{Baseline strategy (no prevention): Monte Carlo summary.}
+  \label{tab:baseline_mc}
+\end{table}
 
 \subsection{Deadlock Detection / Prevention}
+In the detection run with \texttt{halt\_on\_deadlock=True}, the simulation stops at the first deadlock (at t=19.26). This shows that the detection logic works and that a deadlock can occur even without prevention.
 
+Monte Carlo results with randomized starts show deadlocks in 11 of 100 runs. This is expected because deadlock is not guaranteed under random timing; it depends on whether all philosophers reach the circular‑wait condition within the simulation horizon. The average performance metrics are similar to the baseline because detection only stops runs that actually reach deadlock.
+\begin{table}[H]
+  \centering
+  \begin{tabular}{l c}
+    \hline
+    \textbf{Metric} & \textbf{Value} \\
+    \hline
+    Number of runs & 100 \\
+    Average total eats & 45.12 $\pm$ 9.68 \\
+    Average eats per philosopher & 9.02 $\pm$ 1.94 \\
+    Average min / max eats & 7.01 / 11.16 \\
+    Average Gini (fairness) & 0.092 \\
+    Deadlock runs & 11 / 100 \\
+    Average first deadlock time & 71.91 \\
+    Zero-eat rate & 0.0 \\
+    \hline
+  \end{tabular}
+  \caption{Deadlock detection strategy: Monte Carlo summary.}
+  \label{tab:detection_mc}
+\end{table}
+  
 \subsection{Starvation Avoidance}
 
 In the following, the impact of the starvation avoidance mechanism is investigated on the simulation runs using Monte Carlo simulation. A model using priority ordering is used as the baseline for comparing the system with and without starvation avoidance. Both of the model configurations are executed over 50 independent runs with identical parameters and the performance metrics are collected for every philosopher in each turn.
@@ -338,30 +342,38 @@ The following boxplots summarize the resulting distributions of four key metrics
 \end{figure}
 
 \noindent
-The boxplot above illustrates, the eat-count distribution reflects system throughput. With starvation avoidance enabled, the median eat count decreases and the distribution becomes more scattered. This is caused by the priority-based mechanism, which allows only the most-starved philosopher to attempt chopstick acquisition at a time, reducing parallelism. As a result, throughput is traded for improved control over starvation.
+The boxplot illustrated in Figure \ref{fig:eat-counts} shows the eat-count distribution, which reflects system throughput. With starvation avoidance enabled, the median eat frequency decreases and the distribution becomes more scattered. This is caused by the priority-based mechanism, which allows only the most-starved philosopher to attempt chopstick acquisition at a time, reducing parallelism. As a result, throughput is traded for improved control over starvation.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{report/images/Task 4/hungry_times_boxplot.png}
     \caption{Eat counts across all philosophers and runs}
-    \label{fig:eat-counts}
+    \label{fig:hungry_times}
 \end{figure}
+
+\noindent
+Running the model with no starvation avoidance delivers a median hungry time of about 35 minutes, while the system with starvation avoidance enabled has a median of about 80 minutes with a large but structured spread (see Figure \ref{fig:hungry_times}). This reflects longer waiting periods introduced by prioritizing the most starved philosopher and temporarily blocking others from progressing. One particular philosopher is allowed to eat while the others have to wait. Even though they have to wait longer to eat, the other philosophers dont have to wait a indefinite amount of time to get the chopsticks. This reflects bounded waiting instead of starvation.
 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{report/images/Task 4/max_hungry_time.png}
     \caption{Eat counts across all philosophers and runs}
-    \label{fig:eat-counts}
+    \label{fig:max_hungry}
 \end{figure}
+
+\noindent
+Figure \ref{fig:max_hungry} shows the distribution of the tracked maximum hungry times across all simulation runs for both model settings. Without starvation avoidance enabled, the system’s maximum hungry time depends on whether starvation occurs in a given run. In contrast, when starvation avoidance is enabled, the maximum hungry time is determined by the number of philosophers, the eating and thinking times, and the priority queue order. This can be observed in the right boxplot of the figure, where the spread of maximum hungry times is larger, spanning approximately from 60 to 115, while the baseline case ranges from about 40 to 60.
+
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{report/images/Task 4/hungry_times_boxplot.png}
+    \includegraphics[width=0.85\textwidth]{report/images/Task 4/eat_std_boxplot.png}
     \caption{Eat counts across all philosophers and runs}
-    \label{fig:eat-counts}
+    \label{fig:std_eats}
 \end{figure}
-
+\noindent
+Figure \ref{fig:std_eats} illustrates the distribution of the per-run standard deviation of eating counts across all simulation runs for both model settings. In the absence of starvation avoidance, the standard deviation varies widely between runs, reflecting differences in how often individual philosophers are able to eat. With starvation avoidance enabled, the variation in eating counts is consistently lower, as the priority-based selection limits disproportionate access to chopsticks. This effect is visible in the right boxplot, where the values are concentrated in a narrower range, indicating improved fairness among philosophers.
 
 \subsection{Scneario Variations}
 
@@ -370,6 +382,13 @@ After analyzing deadlock and starvation behavior under the standard configuratio
 \subsubsection{Varying Number of Philosophers}
 
 First, we increase the number of philosophers (thus automatically also number of chopsticks) to 10, and compare simulation outcomes for the left-first (LF), priority ordering (PO) and timeout (TO) strategies. For the TO strategy, the timeout duration is set to 2 time units, if not stated otherwise.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{report/images/Taskg}
+    \caption{Eat counts across all philosophers and runs}
+    \label{fig:max_hungry}
+\end{figure}
 
 %% results for this part %%
 
