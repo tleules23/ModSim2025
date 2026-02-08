@@ -381,28 +381,38 @@ After analyzing deadlock and starvation behavior under the standard configuratio
 
 \subsubsection{Varying Number of Philosophers}
 
-First, we increase the number of philosophers (thus automatically also number of chopsticks) to 10, and compare simulation outcomes for the left-first (LF), priority ordering (PO) and timeout (TO) strategies. For the TO strategy, the timeout duration is set to 2 time units, if not stated otherwise.
+First, we increase the number of philosophers (thus automatically also number of chopsticks) to 10, and compare simulation outcomes for the left-first (LF), priority ordering (PO) and timeout (TO) strategies. For the TO strategy, the timeout duration is set to 2 time units, if not stated otherwise. We also count the number of "persistent deadlocks", which means that the deadlock state does not change for a certain amount of time, such that we can assume, that we really are in a deadlock. This is important, since for example in the Timeout Strategy, it can be the case that the deadline situation appears just for a short while and is solved then by the timeout strategy itself.
+
+Figure~\ref{fig:10_phils} compares three deadlock prevention strategies for ten philosophers by showing the average number of eating events per philosopher as bars. The standard deviation across the 10 Monte Carlo runs is also indicated by the black thin error bars, Above each bar, the annotations report the deadlock rate (percentage of runs that ended in a deadlock) and the Gini coefficient as a fairness measure (lower = more equal access to eating). So, with 10 philosophers, the differences between the strategies become very clear. We see that in terms of eats per philosopher, the LF strategy performs the worst, also containing a certain amount of deadlock cases. The PO strategy (See Priority bar in Figure) performs better, but it is less fair, since the Gini value is higher, Timeout achieves the best overall result in this setup: no deadlocks, the highest throughput ($71.1$), and the lowest Gini ($0.038$), so the eating opportunities are distributed more evenly while keeping the system stable.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\textwidth]{report/images/Taskg}
-    \caption{Eat counts across all philosophers and runs}
-    \label{fig:max_hungry}
+    \includegraphics[width=1\textwidth]{report/images/Task 5/10_phils.png}
+    \caption{Comparison Simulation Results for 10 Philosophers}
+    \label{fig:10_phils}
 \end{figure}
 
-%% results for this part %%
+To see how the results change with a lower number of philosopher, we also set the number of philosophers to three and re-run with the same configurations. The results are shown in Figure~\ref{fig:3_phils} again shows the same statistics for three philosophers. Here, the throughput is very similar for all strategies and fairness is also comparable. However, the whole model is highly unstable now, if we look at the deadlock rates. Although the persistent deadlock rate is $0\%$ for the timeout strategy, we still see that the occurring deadlock state rate is very high. However, we see that this is fully prevented in the priority ordering case. This indicates that for three philosophers, priority is clearly the most robust choice, because the other strategies frequently reach a deadlock even though their average performance looks similar.
 
-To see how the results change, we also set the number of philosophers to three and re-run with the same configurations.
-
-%% results for this part %%
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{report/images/Task 5/3_phils.png}
+    \caption{Comparison Simulation Results for 3 Philosophers}
+    \label{fig:3_phils}
+\end{figure}
 
 For the next part, we will inspect results with number of philosophers set to five, as in the standard model.
 
 \subsubsection{Varying Thinking Time}
 
-Now, we want to vary the thinking time. For this reason, we want to look at two different uniform distributions: $unif(2,30)$ and $unif(2,4)$. 
+Now, we want to vary the thinking time. For this reason, we want to look at two different uniform distributions: $unif(2,30)$ and $unif(2,4)$. Figure~\ref{fig:var_think} shows a stacked bar chart, which illustrates, how each philosopher’s simulation time is distributed across the three states thinking, hungry (= waiting), and eating, for two different thinking-time distributions. We see that when the thinking time is wide ($unif(2,30)$), philosophers spend most of the time thinking, and only a small number is waiting in the hungry state. As a result, contention for chopsticks is low, deadlocks do not occur ($0\%)$, but the throughput is lower. With short thinking times ($unif(2,30)$), philosophers become hungry much more frequently. The plot shows that the reduced thinking time has largely moved into hungry time, meaning philosophers spend much more time waiting for chopsticks because of higher contention. However, the throughput still rises because philosophers cycle through the think–eat loop more often. This higher contention also slightly increases the deadlock probability to $2\%$.
 
-%% results for this part %%
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{report/images/Task 5/var_think.png}
+    \caption{Time Composition vs Thinking Time Distribution for Left-first strategy}
+    \label{fig:var_think}
+\end{figure}
 
 %% analysis of reuslts %%
 
