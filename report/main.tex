@@ -83,7 +83,7 @@ Problem}
 
 \publishers{Supervisor: Madlen Martinek}
 \author{Assylbek Tleules, 12432843 - Curriculum Number: UE 066 645 \footnote{TODO: ADD DESCRIPTION}\\
-Max Mustermann ,Matricular Number - Curriculum Number: UE 066 645 \footnote{TODO: ADD DESCRIPTION}\\
+Arian Ahmad, 01529233 - Curriculum Number: UE 066 926 \footnote{TODO: ADD DESCRIPTION}\\
 Hasan Hüseyin Günes, 12229237 - Curriculum Number: UE 066 645\footnote{TODO: ADD DESCRIPTION}\\
 }
 
@@ -116,43 +116,77 @@ As shown in Figure~\ref{fig:diningphilosophers}, in the Dining Philosophers prob
 Based on a discrete event simulation model, this work aims to implement the Dining Philosophers system and analyze its behavior under different configurations and rules. First, the base concept without any additional methods is inspected. Then, methods are introduced to the concept, which aim to detect and prevent deadlocks and to reduce starvation cases. Finally, we consider further scenarios such as varying the number of philosophers and allowing rule violations by individual philosophers. The different settings are compared using the simulation outcomes.  
 
 \section{Model}
-\subsection{Modeling}
-\label{sec:modelling}
-We first describe the conceptual modeling. Hereby we may apply various types of formulas such as numbered equations, like
-\begin{equation}
-\label{eq:pythogoras}
- a^2 + b^2 = c^2,
-\end{equation}
-or non-numbered equations like
-\begin{equation*}
- \al + \be + \g = 180.
-\end{equation*}
-Numberes equations can be referenced via (\ref{eq:pythogoras}).
 
-Use e.g. \textit{eqnarray}, \textit{align} or \textit{multline} environments for multi-row equations, such as
-\begin{eqnarray}
-  a &=& b\cdot \frac{sin(\al)}{sin(\be)} \\
-    &=& c\cdot \frac{sin(\al)}{sin(\g)}.
-\end{eqnarray}
+TODO: do not forget to update requirements.txt after finishing implementation!
 
-We write a matrix using the \textit{matrix} command.
-\[ r\cdot
-\begin{pmatrix}
- cos(\p) & sin(\p) & 0 \\
- -sin(\p) & cos(\p) & 0 \\
- 0 & 0 & 1
-\end{pmatrix}.
-\]
+\subsection{Modeling Approach}
 
-It is always good to use pictures and charts for visualising the model structure, such as Figure \ref{fig:figure}. Do not forget to refer to a figure in the main text.
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=\textwidth]{./images/ClassEAmplifier.pdf}
- % bBheightode23last5Sec.png: 1130x487 pixel, 90dpi, 31.89x13.75 cm, bb=0 0 904 390
- \caption{This is a sample image if a Class-E Amplifier.}
- \label{fig:figure}
-\end{figure}
-\subsection{Parametrisation}
+describe in general how we modelled (which classes / entitites etc.)
+
++ f.e. explain 1 time unit = 1 min etc.
+
+\subsection{Base Model}
+
+1. Describe basic model (f.e. includig initial setup of model) 
+
+\subsection{Deadlock Detection / Prevention}
+
+2. explain Deadlock -> describe our Deadlock Detection / Prevention Concepts
+
+\subsection{Starvation Avoidance}
+
+3. explain Starvation -> describe our Starvation Avoidance Concept
+
+Deadlocks are not the only issues that can occur during the simulation runs. Because of the mostly stochastic nature of the dining philosopher problem, given by the unordered sequence of chopstick acquisitions by the philosophers, it is possible that each participant in the simulation run is waiting indefinitely for his turn to eat. A fitting example would be the case where both neighbors of the same philosopher always take the chopsticks first. Long enough waiting times can lead to starvation, which for the dining philosophers problem is considered to have failed if even one philosopher starves. In our model, starvation does not directly imply death or termination; it refers to unfair scheduling where a philosopher may wait indefinitely while others continue to eat. In the current baseline implementation biased anyone can attempt to grab free chopsticks and fast or lucky philosophers may finish thinking earlier, retry more aggressively or reaquire chopsticks repeatedly.
+
+This possibility of indefinite waiting times requires the addition of a mechanism that ensures fairness between the members for acquiring the chopsticks.
+
+\subsubsection{Fairness Mechanism}
+
+In order to combat starvation, the model is using an aging-based scheduling strategy in which hungry philosophers are dynamically prioritized by the time elapsed since their last eating event. 
+
+\subsection{Scenario Variations}
+
+4. explain complex scenarios we are further inspecting
+
+\subsection{Evaluation Methodology}
+
+In order to draw reliable conclusions, we do not rely on a single simulation run. For this reason, all simulations are done using a Monte Carlo Simulation. Depending on the scenario and parameter setting, each configuration is repeated between 50 and 100 times.
+
+The evaluation is primarily based on summary statistics across runs, including the mean and standard deviation of measured performance and fairness metrics. For instance, the total number of eating events, the average number of eats per philosopher, as well as dispersion measures such as the minimum and maximum number of eats across philosophers are reported. Listing~\ref{lst:reportoutput} shows an example report generated from a Monte Carlo simulation. The focus of this Listing is on the structure of the reported metrics rather than on the specific numerical values.
+
+\begin{lstlisting}[language={},keywordstyle=\color{black},commentstyle=\color{black},stringstyle=\color{black},caption={Example Report Output},
+ label=lst:reportoutput]  
+Runs: 100
+Avg total eats: 47.96 +/- 6.62
+Avg eats/philosopher: 9.59 +/- 1.32
+Avg min/max eats: 7.51 / 11.79
+Avg Gini (fairness): 0.088
+Deadlock runs: 17/100
+Avg first deadlock time: 76.99
+Per-philosopher avg eats: [9.34, 9.54, 9.61, 9.75, 9.72]
+Per-philosopher std eats: [2.11, 2.35, 2.04, 2.14, 1.91]
+Per-philosopher avg thinking time: [49.74, 48.37, 48.97, 50.78, 49.28]
+Per-philosopher avg hungry time:   [43.5, 43.47, 41.51, 41.06, 43.68]
+Per-philosopher avg eating time:   [26.76, 28.16, 29.53, 28.16, 27.04]
+Per-philosopher std thinking time: [12.37, 11.51, 12.69, 11.14, 12.09]
+Per-philosopher std hungry time:   [11.61, 12.65, 12.81, 12.0, 11.4]
+Per-philosopher std eating time:   [7.54, 8.03, 8.26, 8.34, 7.52]
+Zero-eat rate by philosopher: [0.0, 0.0, 0.0, 0.0, 0.0]
+\end{lstlisting}    
+
+To monitor simulation progress and to enable debugging before running large Monte Carlo batches, we use logging during individual runs. Listing~\ref{lst:logging} illustrates a short example from the event log of an individual simulation run. 
+
+\begin{lstlisting}[language={},keywordstyle=\color{black},commentstyle=\color{black},stringstyle=\color{black},caption={Snippet of an Example Simulation Logging},
+ label=lst:logging]  
+[t=0.27] Philosopher 0 is now HUNGRY
+[t=0.38] Philosopher 0 is now EATING (count: 1)
+[t=0.46] Philosopher 1 is now HUNGRY
+[t=0.57] Philosopher 3 is now HUNGRY
+[t=1.01] Philosopher 3 is now EATING (count: 1)
+\end{lstlisting}  
+
+\subsection{Parametrisation (from template)}
 It is important to distinguish between parameters and parameter values. The latter should be specified e.g. using a parameter table such as 
 Table \ref{tab:ParA}. Do not forget to explain where you got your parameter values from.
 \begin{table}[!h]
@@ -173,6 +207,9 @@ Table \ref{tab:ParA}. Do not forget to explain where you got your parameter valu
 \end{table}
 
 \subsection{Implementation}
+
+maybe talk about how we implemented it in general + some details maybe
+
 
 Implementation should be distinguished from the conceptual modelling (see Section \ref{sec:modelling}) and described in a separate section. Keep it brief \textbf{do not} put the whole source-code into the documentation. If there are important snippets, you may use e.g. \verb|\lstinputlisting|.
 
@@ -224,14 +261,11 @@ In row \ref{lnbr:InOutput_constructor} in Listing \ref{src:InOutputVector_defs} 
 \verb|InOutputVector|.
 
 \section{Simulation Results}
-We document the results of the simulation as far as possible without potentially subjective interpretation. This is usually done with the help of plots, as in Figure \ref{fig:figure2}.
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=\textwidth]{./images/bBheightode23last5Sec.png}
- % bBheightode23last5Sec.png: 1130x487 pixel, 90dpi, 31.89x13.75 cm, bb=0 0 904 390
- \caption{Simulation results when using parameter set A (see Table \ref{tab:ParA})}
- \label{fig:figure2}
-\end{figure}
+
+Talking about results (in a storytelling way, so beginning with basic model, then extending with deadlock detection and so on, as in the notebook) + of course showing some plots
+
+
+We document the results of the simulation as far as possible without potentially subjective interpretation. This is usually done with the help of plots.
 
 \section{Discussion}
 \paragraph{Summary.} We tell what we told, and summarise that we showed some important \LaTeX commands for scientific writing and displayed some dummy simulation results.
