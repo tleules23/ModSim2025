@@ -83,7 +83,7 @@ Problem}
 
 \publishers{Supervisor: Madlen Martinek}
 \author{Assylbek Tleules, 12432843 - Curriculum Number: UE 066 645 \footnote{TODO: ADD DESCRIPTION}\\
-Max Mustermann ,Matricular Number - Curriculum Number: UE 066 645 \footnote{TODO: ADD DESCRIPTION}\\
+Arian Ahmad, 01529233 - Curriculum Number: UE 066 926 \footnote{TODO: ADD DESCRIPTION}\\
 Hasan Hüseyin Günes, 12229237 - Curriculum Number: UE 066 645\footnote{TODO: ADD DESCRIPTION}\\
 }
 
@@ -116,42 +116,29 @@ As shown in Figure~\ref{fig:diningphilosophers}, in the Dining Philosophers prob
 Based on a discrete event simulation model, this work aims to implement the Dining Philosophers system and analyze its behavior under different configurations and rules. First, the base concept without any additional methods is inspected. Then, methods are introduced to the concept, which aim to detect and prevent deadlocks and to reduce starvation cases. Finally, we consider further scenarios such as varying the number of philosophers and allowing rule violations by individual philosophers. The different settings are compared using the simulation outcomes.  
 
 \section{Model}
-\subsection{Modeling}
-\label{sec:modelling}
-We first describe the conceptual modeling. Hereby we may apply various types of formulas such as numbered equations, like
-\begin{equation}
-\label{eq:pythogoras}
- a^2 + b^2 = c^2,
-\end{equation}
-or non-numbered equations like
-\begin{equation*}
- \al + \be + \g = 180.
-\end{equation*}
-Numberes equations can be referenced via (\ref{eq:pythogoras}).
 
-Use e.g. \textit{eqnarray}, \textit{align} or \textit{multline} environments for multi-row equations, such as
-\begin{eqnarray}
-  a &=& b\cdot \frac{sin(\al)}{sin(\be)} \\
-    &=& c\cdot \frac{sin(\al)}{sin(\g)}.
-\end{eqnarray}
+TODO: do not forget to update requirements.txt after finishing implementation!
 
-We write a matrix using the \textit{matrix} command.
-\[ r\cdot
-\begin{pmatrix}
- cos(\p) & sin(\p) & 0 \\
- -sin(\p) & cos(\p) & 0 \\
- 0 & 0 & 1
-\end{pmatrix}.
-\]
+Describe Modeling Approach
 
-It is always good to use pictures and charts for visualising the model structure, such as Figure \ref{fig:figure}. Do not forget to refer to a figure in the main text.
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=\textwidth]{./images/ClassEAmplifier.pdf}
- % bBheightode23last5Sec.png: 1130x487 pixel, 90dpi, 31.89x13.75 cm, bb=0 0 904 390
- \caption{This is a sample image if a Class-E Amplifier.}
- \label{fig:figure}
-\end{figure}
+1. Describe basic model (f.e. includig initial setup of model) 
+
+2. explain Deadlock -> describe our Deadlock Detection / Prevention Concepts
+
+3. explain Starvation -> describe our Starvation Avoidance Concept
+
+4. explain complex scenarios we are further inspecting
+
+5. briefly describe that we always apply monte carlo, and what kind of statistics we are looking at
+
+6. explain we are also using logging for deug and so on and just show a brief snippet
+
+\section{Starvation Avoidance}
+
+Deadlocks are not the only issues that can occur during the simulation runs. Because of the mostly stochastic nature of the dining philosopher problem, given by the unordered sequence of chopstick aquisitions by the philsophers, it is possible that each participant in the simulation run indefinitely waits for his turn to eat. A fitting example would be the case where both neighbours of the same philosopher always take the chipstocks first. Long enough waiting times can lead to starvation which for the dining philosophers problem is considered to have failed if even one philosopher starves.
+This possibility of starvation requires the addition of an mechanism which ensures fairness between the members for aquiring the chopsticks.
+
+
 \subsection{Parametrisation}
 It is important to distinguish between parameters and parameter values. The latter should be specified e.g. using a parameter table such as 
 Table \ref{tab:ParA}. Do not forget to explain where you got your parameter values from.
@@ -173,6 +160,9 @@ Table \ref{tab:ParA}. Do not forget to explain where you got your parameter valu
 \end{table}
 
 \subsection{Implementation}
+
+maybe talk about how we implemented it in general + some details maybe
+
 
 Implementation should be distinguished from the conceptual modelling (see Section \ref{sec:modelling}) and described in a separate section. Keep it brief \textbf{do not} put the whole source-code into the documentation. If there are important snippets, you may use e.g. \verb|\lstinputlisting|.
 
@@ -224,14 +214,11 @@ In row \ref{lnbr:InOutput_constructor} in Listing \ref{src:InOutputVector_defs} 
 \verb|InOutputVector|.
 
 \section{Simulation Results}
-We document the results of the simulation as far as possible without potentially subjective interpretation. This is usually done with the help of plots, as in Figure \ref{fig:figure2}.
-\begin{figure}[!ht]
- \centering
- \includegraphics[width=\textwidth]{./images/bBheightode23last5Sec.png}
- % bBheightode23last5Sec.png: 1130x487 pixel, 90dpi, 31.89x13.75 cm, bb=0 0 904 390
- \caption{Simulation results when using parameter set A (see Table \ref{tab:ParA})}
- \label{fig:figure2}
-\end{figure}
+
+Talking about results (in a storytelling way, so beginning with basic model, then extending with deadlock detection and so on, as in the notebook) + of course showing some plots
+
+
+We document the results of the simulation as far as possible without potentially subjective interpretation. This is usually done with the help of plots.
 
 \section{Discussion}
 \paragraph{Summary.} We tell what we told, and summarise that we showed some important \LaTeX commands for scientific writing and displayed some dummy simulation results.
